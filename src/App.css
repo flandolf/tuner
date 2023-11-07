@@ -1,0 +1,8 @@
+:root {
+    display: flex;
+    flex-direction: column;
+    font-family: 'Inter';
+    gap: 10px;
+    height: 100vh;
+    width: 100vw;
+}
