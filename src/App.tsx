@@ -148,7 +148,7 @@ const App = () => {
       {!micPerm && (
         <Button onClick={handleMicPerm}>Request Microphone Permission</Button>
       )}
-      {micPerm && (
+      {micPerm && micDevices != [] && (
         <Select
           onValueChange={(e) => {
             setMic(e);
