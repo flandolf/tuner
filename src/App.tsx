@@ -10,6 +10,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { Progress } from "./components/ui/progress";
+import { ModeToggle } from "./components/mode-toggle";
 const App = () => {
   const [micDevices, setMicDevices] = useState<string[]>([]);
   const [mic, setMic] = useState<string>("");
@@ -33,6 +34,12 @@ const App = () => {
     getMicDevices();
   }, []);
 
+  useEffect(() => {
+    if (micPerm) {
+      getMicDevices();
+    }
+  }, [micPerm]);
+
   const getMicDevices = () => {
     navigator.mediaDevices
       .enumerateDevices()
@@ -40,7 +47,6 @@ const App = () => {
         devices.forEach((device) => {
           if (device.kind === "audioinput") {
             setMicDevices((prev) => [...prev, device.label]);
-            // Remove Duplicates
             setMicDevices((prev) =>
               prev.filter((v, i, a) => a.indexOf(v) === i)
             );
@@ -142,13 +148,13 @@ const App = () => {
   return (
     <div className="p-4 text-2xl space-y-2 flex flex-col align-middle justify-center">
       <div className="flex flex-row">
-        <h1 className="font-semibold text-7xl text-green-500">"Tuner"</h1>
-        <p className="text-2xl">Version 2.0.0</p>
+        <h1 className="font-semibold text-7xl text-blue-500">"Tuner"</h1>
+        <p className="text-2xl">Version 2.0</p>
       </div>
       {!micPerm && (
         <Button onClick={handleMicPerm}>Request Microphone Permission</Button>
       )}
-      {micPerm && micDevices.length > 0 && (
+      {micPerm && (
         <Select
           onValueChange={(e) => {
             setMic(e);
@@ -156,14 +162,19 @@ const App = () => {
         >
           <SelectTrigger>{mic || "Select Microphone"}</SelectTrigger>
           <SelectContent>
-            {micDevices.map((device, index) => (
-              <SelectItem key={index} value={device}>
-                {device}
-              </SelectItem>
-            ))}
+            {micDevices.map(
+              (device, index) =>
+                device &&
+                device !== "" && (
+                  <SelectItem key={index} value={device}>
+                    {device}
+                  </SelectItem>
+                )
+            )}
           </SelectContent>
         </Select>
       )}
+
       <h2>Microphone Permission: {micPerm ? "Granted" : "Denied"}</h2>
       <Button onClick={start} disabled={!micPerm || running}>
         {running ? "Running" : "Start"}
@@ -171,7 +182,7 @@ const App = () => {
       <div className="rounded-lg py-4 w-full">
         <div className="flex flex-col items-center justify-center">
           <div className="text-8xl font-bold mb-4">
-            <span className="text-green-500">{closestNote}</span>
+            <span className="text-blue-500">{closestNote}</span>
           </div>
           <div className="w-full mb-8">
             <Progress
@@ -180,7 +191,7 @@ const App = () => {
             />
           </div>
           <div className="text-2xl font-medium">
-            <span className="text-green-500">
+            <span className="text-blue-500">
               {percentageInTune >= 0.5 ? "In Tune" : "Out of Tune"}
             </span>{" "}
             | {centsOff.toFixed(0)} cents
@@ -203,7 +214,8 @@ const App = () => {
           instrument. The microphone should not be your computer's built-in
           microphone.
         </p>
-        <p className="text-green-500">&copy; 2024 Andy Wang</p>
+        <p className="text-blue-500">&copy; 2024 Andy Wang</p>
+        <ModeToggle/>
       </div>
     </div>
   );
