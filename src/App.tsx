@@ -192,7 +192,7 @@ const App = () => {
           </div>
           <div className="text-2xl font-medium">
             <span className="text-blue-500">
-              {percentageInTune >= 0.5 ? "In Tune" : "Out of Tune"}
+              {percentageInTune >= 0.8 ? "In Tune" : "Out of Tune"}
             </span>{" "}
             | {centsOff.toFixed(0)} cents
           </div>
