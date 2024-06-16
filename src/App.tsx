@@ -21,16 +21,8 @@ const App = () => {
   const [centsOff, setCentsOff] = useState<number>(0);
   const [percentageInTune, setPercentageInTune] = useState<number>(0);
   const [running, setRunning] = useState<boolean>(false);
-  const permissionName = "microphone" as PermissionName;
   useEffect(() => {
-    // Check microphone permission status on page load
-    navigator.permissions.query({ name: permissionName }).then((result) => {
-      if (result.state === "granted") {
-        setMicPerm(true);
-      } else if (result.state === "denied") {
-        setMicPerm(false);
-      }
-    });
+    navigator.mediaDevices.getUserMedia({ audio: true });
     getMicDevices();
   }, []);
 
@@ -59,24 +51,8 @@ const App = () => {
   };
 
   const handleMicPerm = () => {
-    navigator.permissions.query({ name: permissionName }).then((result) => {
-      if (result.state === "granted") {
-        setMicPerm(true);
-      } else if (result.state === "prompt") {
-        navigator.mediaDevices
-          .getUserMedia({ audio: true })
-          .then(() => {
-            setMicPerm(true);
-          })
-          .catch((err) => {
-            console.log(err.name + ": " + err.message);
-          });
-      } else if (result.state === "denied") {
-        return;
-      }
-      result.onchange = () => {
-        console.log(result.state);
-      };
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(() => {
+      setMicPerm(true);
     });
   };
 
@@ -146,7 +122,7 @@ const App = () => {
   };
 
   return (
-    <div className="p-4 text-2xl space-y-2 flex flex-col align-middle justify-center">
+    <div className="p-8 text-2xl space-y-2 flex flex-col align-middle justify-center">
       <div className="flex flex-row">
         <h1 className="font-semibold text-7xl text-blue-500">"Tuner"</h1>
         <p className="text-2xl">Version 2.0</p>
