@@ -1,4 +1,4 @@
-# Tuner
+# Tuner 🎵
 
 ## Description
 Tuner is software that uses advanced algorithms to detect the pitch of a given audio input.
