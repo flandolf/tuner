@@ -22,3 +22,4 @@ Build:
 ```bash
 bun build .\src\main.tsx --minify --splitting --outdir build
 ```
+![Screenshot](sc1.png)
