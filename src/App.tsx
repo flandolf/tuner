@@ -12,7 +12,7 @@ import {
 import { Progress } from "./components/ui/progress";
 import { ModeToggle } from "./components/mode-toggle";
 const App = () => {
-  const [micDevices, setMicDevices] = useState<string[]>([]);
+  const [micDevices, setMicDevices] = useState<Array<{id: string; label: string}>>([]);
   const [mic, setMic] = useState<string>("");
   const [micPerm, setMicPerm] = useState<boolean>(false);
   const [pitch, setPitch] = useState<string>("");
@@ -36,14 +36,13 @@ const App = () => {
     navigator.mediaDevices
       .enumerateDevices()
       .then((devices) => {
-        devices.forEach((device) => {
-          if (device.kind === "audioinput") {
-            setMicDevices((prev) => [...prev, device.label]);
-            setMicDevices((prev) =>
-              prev.filter((v, i, a) => a.indexOf(v) === i)
-            );
-          }
-        });
+        const audioDevices = devices
+          .filter(device => device.kind === "audioinput")
+          .map(device => ({
+            id: device.deviceId,
+            label: device.label || `Microphone ${device.deviceId}`
+          }));
+        setMicDevices(audioDevices);
       })
       .catch((err) => {
         console.log(err.name + ": " + err.message);
@@ -122,66 +121,82 @@ const App = () => {
   };
 
   return (
-    <div className="p-8 text-2xl space-y-2 flex flex-col align-middle justify-center">
-      <div className="flex flex-row">
-        <h1 className="font-semibold text-7xl text-blue-500">"Tuner"</h1>
-        <p className="text-2xl">Version 2.0</p>
+    <div className="min-h-screen p-8 flex flex-col items-center justify-center space-y-6 max-w-4xl mx-auto">
+      <div className="flex items-baseline gap-4 mb-4">
+        <h1 className="font-bold text-7xl bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent">Tuner</h1>
+        <p className="text-2xl text-muted-foreground">Version 2.1</p>
       </div>
-      {!micPerm && (
-        <Button onClick={handleMicPerm}>Request Microphone Permission</Button>
-      )}
-      {micPerm && (
-        <Select
-          onValueChange={(e) => {
-            setMic(e);
-          }}
+      <div className="w-full max-w-md space-y-4">
+        {!micPerm && (
+          <Button onClick={handleMicPerm} className="w-full py-6 text-lg hover:scale-105 transition-transform">
+            Request Microphone Permission
+          </Button>
+        )}
+        {micPerm && (
+          <Select
+            onValueChange={(deviceId) => {
+              setMic(deviceId);
+            }}
+          >
+            <SelectTrigger className="w-full py-6 text-lg">
+              {micDevices.find(d => d.id === mic)?.label || "Select Microphone"}
+            </SelectTrigger>
+            <SelectContent>
+              {micDevices.map((device) => (
+                <SelectItem key={device.id} value={device.id}>
+                  {device.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+    
+        <h2 className="text-xl text-center text-muted-foreground">
+          Microphone Permission: {micPerm ? "Granted" : "Denied"}
+        </h2>
+        <Button 
+          onClick={start} 
+          disabled={!micPerm || running}
+          className={`w-full py-6 text-lg ${running ? 'bg-green-500 hover:bg-green-600' : 'hover:scale-105'} transition-all`}
         >
-          <SelectTrigger>{mic || "Select Microphone"}</SelectTrigger>
-          <SelectContent>
-            {micDevices.map(
-              (device, index) =>
-                device &&
-                device !== "" && (
-                  <SelectItem key={index} value={device}>
-                    {device}
-                  </SelectItem>
-                )
-            )}
-          </SelectContent>
-        </Select>
-      )}
-
-      <h2>Microphone Permission: {micPerm ? "Granted" : "Denied"}</h2>
-      <Button onClick={start} disabled={!micPerm || running}>
-        {running ? "Running" : "Start"}
-      </Button>
-      <div className="rounded-lg py-4 w-full">
-        <div className="flex flex-col items-center justify-center">
-          <div className="text-8xl font-bold mb-4">
-            <span className="text-blue-500">{closestNote}</span>
+          {running ? "Running" : "Start"}
+        </Button>
+      </div>
+    
+      <div className="w-full max-w-2xl rounded-xl bg-card p-8 shadow-lg transition-all">
+        <div className="flex flex-col items-center justify-center space-y-6">
+          <div className="text-9xl font-bold mb-4 transition-all transform hover:scale-105">
+            <span className={`${percentageInTune >= 0.8 ? 'text-green-500' : 'text-blue-500'}`}>
+              {closestNote || '-'}
+            </span>
           </div>
           <div className="w-full mb-8">
             <Progress
               value={percentageInTune * 100}
-              color={percentageInTune >= 0.5 ? "green" : "red"}
+              className={`h-4 transition-all ${percentageInTune >= 0.8 ? 'bg-green-100' : 'bg-blue-100'}`}
             />
           </div>
-          <div className="text-2xl font-medium">
-            <span className="text-blue-500">
+          <div className="text-2xl font-medium text-center space-y-2">
+            <span className={`block text-3xl font-bold ${percentageInTune >= 0.8 ? 'text-green-500' : 'text-blue-500'}`}>
               {percentageInTune >= 0.8 ? "In Tune" : "Out of Tune"}
-            </span>{" "}
-            | {centsOff.toFixed(0)} cents
+            </span>
+            <span className="text-muted-foreground">{centsOff.toFixed(0)} cents</span>
           </div>
         </div>
       </div>
-      <div className="text-sm text-gray-400">
-        <p className="text-base">Raw Data: </p>
-        <p>Pitch: {pitch}</p>
-        <p>Closest Note: {closestNote}</p>
-        <p>Clarity: {clarity}</p>
-        <p>Cents Off: {centsOff}</p>
-        <p>Percentage In Tune: {percentageInTune}</p>
-        <p className="max-w-[40vw]">
+    
+      <div className="text-sm text-muted-foreground max-w-2xl">
+        <div className="space-y-2 p-4 rounded-lg bg-card/50">
+          <p className="text-base font-medium">Raw Data:</p>
+          <div className="grid grid-cols-2 gap-2">
+            <p>Pitch: {pitch || '-'}</p>
+            <p>Closest Note: {closestNote || '-'}</p>
+            <p>Clarity: {clarity.toFixed(2)}</p>
+            <p>Cents Off: {centsOff.toFixed(1)}</p>
+            <p>Percentage In Tune: {(percentageInTune * 100).toFixed(1)}%</p>
+          </div>
+        </div>
+        <p className="mt-4 text-sm leading-relaxed">
           This app is relatively accurate, but may not be perfect. It works best
           with a clean tone, however, it can still work with distortion or other
           effects. It should be used as a tool to help you tune your instrument,
@@ -190,8 +205,10 @@ const App = () => {
           instrument. The microphone should not be your computer's built-in
           microphone.
         </p>
-        <p className="text-blue-500">&copy; 2024 Andy Wang</p>
-        <ModeToggle/>
+        <div className="flex items-center justify-between mt-4 pt-4 border-t">
+          <p className="text-blue-500">&copy; 2024 Andy Wang</p>
+          <ModeToggle />
+        </div>
       </div>
     </div>
   );
